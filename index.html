@@ -921,13 +921,59 @@
       let attempts = 0;
 
       while (!validSchedule && attempts < 2000) {
-        let gandaMatches = shuffle(baseGandaMatches);
-        let singleMatches = shuffle(baseSingleMatches);
+        let gandaPool = shuffle(baseGandaMatches);
+        let singlePool = shuffle(baseSingleMatches);
 
         let allMatches = [];
-        while (gandaMatches.length || singleMatches.length) {
-          if (gandaMatches.length) allMatches.push(gandaMatches.pop());
-          if (singleMatches.length) allMatches.push(singleMatches.pop());
+        let totalMatches = gandaPool.length + singlePool.length;
+        
+        for (let day = 0; day < Math.ceil(totalMatches / 3); day++) {
+           let singlePlayersToday = new Set();
+           for (let timeSlot = 0; timeSlot < 3; timeSlot++) {
+              if (allMatches.length >= totalMatches) break;
+              
+              let isGandaSlot = (timeSlot === 2);
+              let chosenMatch = null;
+
+              if (isGandaSlot && gandaPool.length > 0) {
+                 chosenMatch = gandaPool.pop();
+              } else if (!isGandaSlot && singlePool.length > 0) {
+                 let foundIdx = -1;
+                 for (let k = singlePool.length - 1; k >= 0; k--) {
+                    let sm = singlePool[k];
+                    if (!singlePlayersToday.has(sm.p1) && !singlePlayersToday.has(sm.p2)) {
+                       foundIdx = k;
+                       break;
+                    }
+                 }
+                 if (foundIdx !== -1) {
+                    chosenMatch = singlePool.splice(foundIdx, 1)[0];
+                    singlePlayersToday.add(chosenMatch.p1);
+                    singlePlayersToday.add(chosenMatch.p2);
+                 } else {
+                    chosenMatch = singlePool.pop();
+                 }
+              } else if (gandaPool.length > 0) {
+                 chosenMatch = gandaPool.pop();
+              } else {
+                 let foundIdx = -1;
+                 for (let k = singlePool.length - 1; k >= 0; k--) {
+                    let sm = singlePool[k];
+                    if (!singlePlayersToday.has(sm.p1) && !singlePlayersToday.has(sm.p2)) {
+                       foundIdx = k;
+                       break;
+                    }
+                 }
+                 if (foundIdx !== -1) {
+                    chosenMatch = singlePool.splice(foundIdx, 1)[0];
+                    singlePlayersToday.add(chosenMatch.p1);
+                    singlePlayersToday.add(chosenMatch.p2);
+                 } else {
+                    chosenMatch = singlePool.pop();
+                 }
+              }
+              allMatches.push(chosenMatch);
+           }
         }
 
         let d = new Date(startStr);
@@ -938,6 +984,7 @@
         finalJadwal = [];
         let matchCountForDay = 0;
         validSchedule = true;
+        let playersToday = new Set();
 
         for (let idx = 0; idx < allMatches.length; idx++) {
           let m = allMatches[idx];
@@ -946,6 +993,7 @@
             // Lompat hari libur (0=Minggu, 6=Sabtu)
             while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
             matchCountForDay = 0;
+            playersToday.clear();
           }
 
           const timeIdx = matchCountForDay;
@@ -956,7 +1004,7 @@
           if (m.type === "ganda") {
             const t1 = resolveGanda(m.p1) || [];
             const t2 = resolveGanda(m.p2) || [];
-            if (t1.some(name => name.toLowerCase().includes("akbar")) || t2.some(name => name.toLowerCase().includes("akbar"))) {
+            if (t1.some(name => name && name.toLowerCase().includes("akbar")) || t2.some(name => name && name.toLowerCase().includes("akbar"))) {
                involvesAkbar = true;
             }
           } else {
@@ -970,6 +1018,17 @@
           if (involvesAkbar && d.getDay() === 5 && times[timeIdx] !== "16.45") {
             validSchedule = false;
             break; // Jika akbar main di hari Jumat selain jam 16.45, kocok ulang
+          }
+          // ----------------------
+
+          // --- Validasi Single 2x Sehari ---
+          if (m.type === "single") {
+             if (playersToday.has(m.p1) || playersToday.has(m.p2)) {
+                validSchedule = false;
+                break;
+             }
+             playersToday.add(m.p1);
+             playersToday.add(m.p2);
           }
           // ----------------------
 
@@ -1299,7 +1358,7 @@
         const restricted = ["Teja", "Haledi Rahmadi", "Sain kesuma", "Amirullah"];
         let isValid = false;
         let attempts = 0;
-        while (!isValid && attempts < 1000) {
+        while (!isValid && attempts < 2000) {
           pool = shuffle(state.gandaPlayers);
           isValid = true;
           for (let i = 0; i < pool.length; i += 2) {
@@ -1308,7 +1367,36 @@
               break;
             }
           }
+
+          // Validasi Akbar terhadap jadwal yang sudah ada
+          if (isValid && state.jadwalSkor && state.jadwalSkor.length > 0) {
+            let tempGanda = {};
+            let idxTemp = 0;
+            Object.keys(state.hasilGanda).forEach(tim => {
+              tempGanda[tim] = [pool[idxTemp], pool[idxTemp + 1]];
+              idxTemp += 2;
+            });
+
+            for (let m of state.jadwalSkor) {
+              if (m.type === "ganda") {
+                let t1 = tempGanda[m.p1] || [];
+                let t2 = tempGanda[m.p2] || [];
+                let hasAkbar = t1.some(name => name && name.toLowerCase().includes("akbar")) || t2.some(name => name && name.toLowerCase().includes("akbar"));
+                let d = new Date(m.date.split('|')[1]);
+                if (hasAkbar && d.getDay() === 5 && m.time !== "16.45") {
+                  isValid = false;
+                  break;
+                }
+              }
+            }
+          }
+
           attempts++;
+        }
+
+        if (!isValid) {
+           alert("Gagal mengocok: Tidak ada formasi ganda yang sesuai dengan aturan Akbar di hari Jumat. Coba ubah jadwal.");
+           return;
         }
 
         let idx = 0;
@@ -1317,7 +1405,42 @@
           idx += 2;
         });
       } else {
-        const pool = shuffle(state.singlePlayers);
+        let pool = [];
+        let isValid = false;
+        let attempts = 0;
+        
+        while (!isValid && attempts < 2000) {
+          pool = shuffle(state.singlePlayers);
+          isValid = true;
+
+          if (state.jadwalSkor && state.jadwalSkor.length > 0) {
+            let tempSingle = {};
+            Object.keys(state.hasilSingle).forEach((p, i) => {
+              tempSingle[p] = pool[i];
+            });
+
+            for (let m of state.jadwalSkor) {
+              if (m.type === "single") {
+                let n1 = tempSingle[m.p1] || "";
+                let n2 = tempSingle[m.p2] || "";
+                let hasAkbar = (n1 && n1.toLowerCase().includes("akbar")) || (n2 && n2.toLowerCase().includes("akbar"));
+                let d = new Date(m.date.split('|')[1]);
+                if (hasAkbar && d.getDay() === 5 && m.time !== "16.45") {
+                  isValid = false;
+                  break;
+                }
+              }
+            }
+          }
+
+          attempts++;
+        }
+
+        if (!isValid) {
+           alert("Gagal mengocok: Tidak ada formasi single yang sesuai dengan aturan Akbar di hari Jumat. Coba ubah jadwal.");
+           return;
+        }
+
         Object.keys(state.hasilSingle).forEach((p, i) => {
           state.hasilSingle[p] = pool[i];
         });
