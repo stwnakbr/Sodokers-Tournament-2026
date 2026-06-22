@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turnamen Biliar 2026 — Rekind Billiard Club</title>
+<style>
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy:       #0B1E35;
+  --navy-mid:   #132840;
+  --navy-light: #1D3A6B;
+  --gold:       #C89B3C;
+  --gold-light: #F0C060;
+  --green:      #0F6E56;
+  --green-mid:  #1D9E75;
+  --green-light:#E0F5EE;
+  --blue-light: #E8EFFE;
+  --white:      #FFFFFF;
+  --off-white:  #F4F6FA;
+  --text-dark:  #0B1E35;
+  --text-mid:   #445570;
+  --text-muted: #7A8FA8;
+  --border:     rgba(11,30,53,0.10);
+  --radius:     10px;
+  --radius-lg:  16px;
+}
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--off-white); color: var(--text-dark); min-height: 100vh; }
+
+/* ── Header ── */
+.site-header { background: var(--navy); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 16px rgba(0,0,0,0.3); }
+.header-inner { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; gap: 14px; padding: 13px 24px; }
+.header-icon { width: 42px; height: 42px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.header-title h1 { font-size: 17px; font-weight: 700; color: var(--white); }
+.header-title p  { font-size: 11.5px; color: var(--gold-light); margin-top: 1px; opacity: .85; }
+.header-nav { margin-left: auto; display: flex; gap: 6px; }
+.nav-btn { padding: 7px 18px; font-size: 13px; font-weight: 600; border-radius: 20px; border: 1.5px solid rgba(255,255,255,0.2); background: transparent; color: rgba(255,255,255,0.65); cursor: pointer; transition: all .15s; }
+.nav-btn:hover  { background: rgba(255,255,255,0.1); color: var(--white); }
+.nav-btn.active { background: var(--gold); border-color: var(--gold); color: var(--navy); }
+
+/* ── Main ── */
+.main { max-width: 1000px; margin: 0 auto; padding: 28px 24px 60px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Section title ── */
+.section-title { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.section-title h2 { font-size: 20px; font-weight: 700; color: var(--navy); }
+.section-title p  { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.title-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+
+/* ── Loading / Error ── */
+.state-box { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 14px; }
+.state-box.error { border-color: #F5B8B8; background: #FEF0F0; color: #A32D2D; }
+.spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--navy-light); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Notice bar ── */
+.notice-bar { background: #FFF8E6; border: 1px solid #EDD18A; border-radius: 8px; padding: 10px 16px; font-size: 13px; color: #7A5500; display: flex; align-items: center; gap: 8px; margin-bottom: 22px; }
+
+/* ── Legend ── */
+.legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-mid); }
+.legend-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+
+/* ── Day Cards ── */
+.days-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+.day-card { background: var(--white); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; transition: box-shadow .15s; }
+.day-card:hover { box-shadow: 0 4px 20px rgba(11,30,53,0.10); }
+.day-card.today { border: 2px solid var(--gold); }
+.day-header { background: var(--navy-mid); padding: 10px 16px; display: flex; align-items: center; gap: 8px; }
+.day-header .day-name { font-size: 13px; font-weight: 700; color: var(--white); flex: 1; letter-spacing: .2px; }
+.today-pill { font-size: 10px; font-weight: 700; background: var(--gold); color: var(--navy); padding: 2px 8px; border-radius: 20px; }
+.match-row { display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-bottom: 1px solid rgba(11,30,53,0.055); transition: background .1s; }
+.match-row:last-child { border-bottom: none; }
+.match-row:hover { background: var(--off-white); }
+.match-time { font-size: 12px; font-weight: 700; color: var(--text-muted); min-width: 40px; }
+.match-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 5px; min-width: 72px; text-align: center; letter-spacing: .3px; white-space: nowrap; }
+.match-badge.single { background: var(--blue-light); color: var(--navy-light); }
+.match-badge.ganda  { background: var(--green-light); color: var(--green); }
+.match-players { flex: 1; font-size: 12px; color: var(--text-dark); line-height: 1.5; }
+.match-players .team-name { font-weight: 700; color: var(--text-dark); }
+.match-players .team-members { font-size: 11px; color: var(--text-muted); }
+.match-players .name { font-weight: 600; }
+.match-players .name.empty { color: var(--text-muted); font-weight: 400; font-style: italic; }
+.match-players .vs { color: var(--text-muted); font-size: 11px; margin: 0 4px; }
+.match-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+.match-dot.filled { background: var(--green-mid); }
+
+/* ── Draw Panel ── */
+.draw-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 640px) { .draw-layout { grid-template-columns: 1fr; } }
+.draw-card { background: var(--white); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; }
+.draw-card-header { padding: 14px 18px; display: flex; align-items: center; gap: 12px; }
+.draw-card-header.ganda  { background: linear-gradient(135deg, #082A20 0%, #0F6E56 100%); }
+.draw-card-header.single { background: linear-gradient(135deg, #0A1A30 0%, #1D3A6B 100%); }
+.draw-card-header h3 { font-size: 14px; font-weight: 700; color: var(--white); }
+.draw-card-header .header-sub { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+.ball-icon { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.2); }
+.ball-icon.b8 { background: #1a1a1a; color: var(--white); }
+.ball-icon.b9 { background: #F5C542; color: var(--navy); }
+
+.draw-body { padding: 16px 18px 8px; }
+.pool-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
+.player-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.chip { font-size: 12px; padding: 4px 10px; border-radius: 20px; background: var(--off-white); color: var(--text-mid); border: 1px solid var(--border); }
+.chip.drawn-ganda  { background: var(--green-light); color: var(--green); border-color: #A0DFCA; font-weight: 600; }
+.chip.drawn-single { background: var(--blue-light);  color: var(--navy-light); border-color: #A8C2F0; font-weight: 600; }
+
+/* Tim slots (ganda) */
+.tim-slots { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+.tim-slots td { padding: 7px 4px; border-bottom: 1px solid rgba(11,30,53,0.055); font-size: 12.5px; vertical-align: top; }
+.tim-slots tr:last-child td { border-bottom: none; }
+.tim-slots .tim-key { color: var(--text-muted); font-weight: 700; width: 50px; font-size: 11.5px; padding-top: 9px; }
+.tim-slots .tim-val { }
+.tim-name { font-weight: 700; font-size: 13px; color: var(--text-dark); }
+.tim-members { font-size: 11.5px; color: var(--text-mid); margin-top: 1px; }
+.slot-empty { color: var(--text-muted); font-style: italic; font-size: 12px; }
+
+/* Player slots (single) */
+.player-slots { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+.player-slots td { padding: 7px 4px; border-bottom: 1px solid rgba(11,30,53,0.055); font-size: 12.5px; }
+.player-slots tr:last-child td { border-bottom: none; }
+.player-slots .p-key  { color: var(--text-muted); font-weight: 700; width: 64px; font-size: 11.5px; }
+.player-slots .p-val  { font-weight: 600; color: var(--text-dark); }
+.player-slots .p-empty { color: var(--text-muted); font-style: italic; font-size: 12px; }
+
+.draw-footer { display: flex; gap: 8px; padding: 12px 18px 16px; }
+.btn { padding: 9px 0; font-size: 13px; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; transition: all .15s; letter-spacing: .2px; flex: 1; }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-ganda  { background: var(--green); color: var(--white); }
+.btn-ganda:hover:not(:disabled) { background: var(--green-mid); }
+.btn-single { background: var(--navy-light); color: var(--white); }
+.btn-single:hover:not(:disabled) { background: #2a5299; }
+.btn-reset { flex: 0 0 auto; padding: 9px 14px; background: #FDE8E8; color: #A32D2D; border: 1px solid #F5B8B8; font-size: 13px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: all .15s; }
+.btn-reset:hover:not(:disabled) { background: #FACECE; }
+.btn-reset:disabled { opacity: .4; cursor: not-allowed; }
+.btn-save { background: var(--gold); color: var(--navy); font-size: 13px; font-weight: 700; padding: 9px 18px; border-radius: 8px; border: none; cursor: pointer; transition: all .15s; }
+.btn-save:hover:not(:disabled) { background: var(--gold-light); }
+.btn-save:disabled { opacity: .5; cursor: not-allowed; }
+
+.done-banner { margin: 0 18px 12px; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; display: none; }
+.done-banner.show { display: flex; align-items: center; gap: 6px; }
+.done-banner.ganda  { background: var(--green-light); color: var(--green); }
+.done-banner.single { background: var(--blue-light); color: var(--navy-light); }
+
+.save-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; border-top: 1px solid var(--border); background: var(--off-white); margin-top: 8px; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+.save-row p { font-size: 12px; color: var(--text-muted); }
+.save-status { font-size: 12px; font-weight: 600; color: var(--green); display: none; }
+.save-status.show { display: inline; }
+.save-status.error { color: #A32D2D; }
+
+/* ── Ref Panel (Tim Info) ── */
+.ref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; margin-bottom: 28px; }
+.ref-card { background: var(--white); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 16px; }
+.ref-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.ref-type-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ref-type-dot.ganda  { background: var(--green-mid); }
+.ref-type-dot.single { background: var(--navy-light); }
+.ref-card h4 { font-size: 13px; font-weight: 700; color: var(--text-dark); }
+.ref-members { font-size: 12.5px; color: var(--text-mid); line-height: 1.7; margin-bottom: 10px; }
+.ref-members span { display: block; }
+.ref-matches-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px; }
+.ref-match-item { font-size: 11.5px; color: var(--text-mid); padding: 3px 0; border-bottom: 1px solid rgba(11,30,53,0.05); }
+.ref-match-item:last-child { border-bottom: none; }
+.ref-match-item .opp { font-weight: 600; color: var(--text-dark); }
+.ref-empty { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .days-grid { grid-template-columns: 1fr; }
+  .main { padding: 18px 14px 50px; }
+  .header-inner { padding: 11px 14px; }
+  .header-title h1 { font-size: 15px; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-icon">🎱</div>
+    <div class="header-title">
+      <h1>Turnamen Biliar 2026</h1>
+      <p>Rekind Billiard Club &nbsp;·&nbsp; 22–30 Juni 2026</p>
+    </div>
+    <nav class="header-nav">
+      <button class="nav-btn active" onclick="showTab('jadwal',this)">📅 Jadwal</button>
+      <button class="nav-btn" onclick="showTab('kocok',this)">🎲 Kocok</button>
+      <button class="nav-btn" onclick="showTab('info',this)">👥 Info Tim</button>
+    </nav>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- ╔═ JADWAL ═╗ -->
+  <div id="tab-jadwal" class="tab-panel active">
+    <div class="section-title">
+      <div class="title-icon" style="background:#EBF2FF">📅</div>
+      <div>
+        <h2>Jadwal Pertandingan</h2>
+        <p>Bola 8 — Ganda &nbsp;·&nbsp; Bola 9 — Single</p>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-badge" style="background:var(--blue-light);color:var(--navy-light)">SINGLE</span> Bola 9 — perorangan</div>
+      <div class="legend-item"><span class="legend-badge" style="background:var(--green-light);color:var(--green)">GANDA</span> Bola 8 — 2 vs 2</div>
+      <div class="legend-item"><span style="width:8px;height:8px;border-radius:50%;background:var(--green-mid);display:inline-block"></span> Pemain sudah dikocok</div>
+    </div>
+    <div id="days-container">
+      <div class="state-box"><div class="spinner"></div><br>Memuat jadwal...</div>
+    </div>
+  </div>
+
+  <!-- ╔═ KOCOK ═╗ -->
+  <div id="tab-kocok" class="tab-panel">
+    <div class="section-title">
+      <div class="title-icon" style="background:#E6F7F1">🎲</div>
+      <div>
+        <h2>Kocok / Draw Pemain</h2>
+        <p>Acak nama ke slot Tim & Player — simpan ke Google Sheet agar semua orang bisa lihat</p>
+      </div>
+    </div>
+    <div class="notice-bar">⚡ Tekan kocok untuk assign nama secara acak. Klik <strong>Simpan ke Sheet</strong> agar hasilnya tersimpan dan bisa dilihat semua orang.</div>
+    <div id="kocok-container">
+      <div class="state-box"><div class="spinner"></div><br>Memuat data pemain...</div>
+    </div>
+  </div>
+
+  <!-- ╔═ INFO TIM ═╗ -->
+  <div id="tab-info" class="tab-panel">
+    <div class="section-title">
+      <div class="title-icon" style="background:#F0EBFF">👥</div>
+      <div>
+        <h2>Informasi Tim & Jadwal Main</h2>
+        <p>Siapa saja di Tim Ganda, dan kapan mereka main</p>
+      </div>
+    </div>
+    <div id="info-container">
+      <div class="state-box"><div class="spinner"></div><br>Memuat informasi tim...</div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  CONFIG — ganti dengan URL Apps Script kamu setelah deploy
+// ══════════════════════════════════════════════════════════════
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzyjQc-styINeXzPj1AG9VxplGQkgJkvOI35xjRiCaFqh0KuJT47cpcDLlQPUmV91Qw/exec";
+
+// ── Jadwal statis ──────────────────────────────────────────────
+const SCHEDULE = [
+  { day:"Senin, 22 Juni",   date:"2026-06-22", matches:[
+    { time:"16.45", type:"single", num:1,  p1:"Player 1", p2:"Player 2" },
+    { time:"17.25", type:"single", num:5,  p1:"Player 2", p2:"Player 3" },
+    { time:"18.30", type:"ganda",  num:1,  p1:"Tim 1",    p2:"Tim 2"    },
+  ]},
+  { day:"Selasa, 23 Juni",  date:"2026-06-23", matches:[
+    { time:"16.45", type:"ganda",  num:5,  p1:"Tim 2",    p2:"Tim 3"    },
+    { time:"17.25", type:"ganda",  num:8,  p1:"Tim 3",    p2:"Tim 4"    },
+    { time:"18.30", type:"single", num:8,  p1:"Player 3", p2:"Player 4" },
+  ]},
+  { day:"Rabu, 24 Juni",    date:"2026-06-24", matches:[
+    { time:"16.45", type:"single", num:2,  p1:"Player 1", p2:"Player 3" },
+    { time:"17.25", type:"single", num:6,  p1:"Player 2", p2:"Player 4" },
+    { time:"18.30", type:"ganda",  num:3,  p1:"Tim 1",    p2:"Tim 4"    },
+  ]},
+  { day:"Kamis, 25 Juni",   date:"2026-06-25", matches:[
+    { time:"16.45", type:"ganda",  num:6,  p1:"Tim 2",    p2:"Tim 4"    },
+    { time:"17.25", type:"ganda",  num:9,  p1:"Tim 3",    p2:"Tim 5"    },
+    { time:"18.30", type:"single", num:9,  p1:"Player 3", p2:"Player 5" },
+  ]},
+  { day:"Jumat, 26 Juni",   date:"2026-06-26", matches:[
+    { time:"16.45", type:"single", num:10, p1:"Player 4", p2:"Player 5" },
+    { time:"17.25", type:"single", num:3,  p1:"Player 1", p2:"Player 4" },
+    { time:"18.30", type:"ganda",  num:2,  p1:"Tim 1",    p2:"Tim 3"    },
+  ]},
+  { day:"Senin, 29 Juni",   date:"2026-06-29", matches:[
+    { time:"16.45", type:"ganda",  num:4,  p1:"Tim 1",    p2:"Tim 5"    },
+    { time:"17.25", type:"ganda",  num:7,  p1:"Tim 2",    p2:"Tim 5"    },
+    { time:"18.30", type:"single", num:4,  p1:"Player 1", p2:"Player 5" },
+  ]},
+  { day:"Selasa, 30 Juni",  date:"2026-06-30", matches:[
+    { time:"16.45", type:"ganda",  num:10, p1:"Tim 4",    p2:"Tim 5"    },
+    { time:"17.25", type:"single", num:7,  p1:"Player 2", p2:"Player 5" },
+  ]},
+];
+
+// ── App State ──────────────────────────────────────────────────
+const state = {
+  loaded: false,
+  gandaPlayers:  [],
+  singlePlayers: [],
+  // hasilGanda: { "Tim 1": ["Nama A", "Nama B"], ... }
+  hasilGanda:  { "Tim 1":[], "Tim 2":[], "Tim 3":[], "Tim 4":[], "Tim 5":[] },
+  hasilSingle: { "Player 1":null, "Player 2":null, "Player 3":null, "Player 4":null, "Player 5":null },
+};
+
+// ── Fetch dari Apps Script ─────────────────────────────────────
+async function loadData() {
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+
+    state.gandaPlayers  = data.gandaPlayers  || [];
+    state.singlePlayers = data.singlePlayers || [];
+
+    // Hasil kocok dari sheet (jika sudah pernah disimpan)
+    if (data.hasilGanda && Object.keys(data.hasilGanda).length) {
+      state.hasilGanda = {
+        "Tim 1": data.hasilGanda["Tim 1"] || [],
+        "Tim 2": data.hasilGanda["Tim 2"] || [],
+        "Tim 3": data.hasilGanda["Tim 3"] || [],
+        "Tim 4": data.hasilGanda["Tim 4"] || [],
+        "Tim 5": data.hasilGanda["Tim 5"] || [],
+      };
+    }
+    if (data.hasilSingle && Object.keys(data.hasilSingle).length) {
+      state.hasilSingle = {
+        "Player 1": data.hasilSingle["Player 1"] || null,
+        "Player 2": data.hasilSingle["Player 2"] || null,
+        "Player 3": data.hasilSingle["Player 3"] || null,
+        "Player 4": data.hasilSingle["Player 4"] || null,
+        "Player 5": data.hasilSingle["Player 5"] || null,
+      };
+    }
+
+    state.loaded = true;
+    renderAll();
+
+  } catch (err) {
+    document.getElementById("days-container").innerHTML =
+      `<div class="state-box error">⚠️ Gagal memuat data: ${err.message}<br><small>Pastikan APPS_SCRIPT_URL sudah diisi dan Apps Script sudah di-deploy.</small></div>`;
+    document.getElementById("kocok-container").innerHTML =
+      `<div class="state-box error">⚠️ Gagal memuat data pemain.</div>`;
+    document.getElementById("info-container").innerHTML =
+      `<div class="state-box error">⚠️ Gagal memuat informasi tim.</div>`;
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────
+function today() { return new Date().toISOString().slice(0,10); }
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i+1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function resolveGanda(timLabel) {
+  return state.hasilGanda[timLabel] || [];
+}
+function resolveSingle(playerLabel) {
+  return state.hasilSingle[playerLabel] || null;
+}
+
+// ── Render: Jadwal ─────────────────────────────────────────────
+function renderSchedule() {
+  const td = today();
+  const html = SCHEDULE.map(d => {
+    const isToday = d.date === td;
+    const matchesHTML = d.matches.map(m => {
+      let playersHTML = "";
+      let isDone = false;
+
+      if (m.type === "ganda") {
+        const t1 = resolveGanda(m.p1);
+        const t2 = resolveGanda(m.p2);
+        isDone = t1.length > 0 && t2.length > 0;
+
+        const t1label = isDone || t1.length
+          ? `<div><span class="team-name">${m.p1}</span><div class="team-members">${t1.join(" &amp; ")}</div></div>`
+          : `<div><span class="name empty">${m.p1}</span></div>`;
+        const t2label = t2.length
+          ? `<div><span class="team-name">${m.p2}</span><div class="team-members">${t2.join(" &amp; ")}</div></div>`
+          : `<div><span class="name empty">${m.p2}</span></div>`;
+
+        playersHTML = `<div style="flex:1">${t1label}<span class="vs">vs</span>${t2label}</div>`;
+
+      } else {
+        const n1 = resolveSingle(m.p1);
+        const n2 = resolveSingle(m.p2);
+        isDone = !!(n1 && n2);
+        const label1 = n1 ? `<span class="name">${n1}</span>` : `<span class="name empty">${m.p1}</span>`;
+        const label2 = n2 ? `<span class="name">${n2}</span>` : `<span class="name empty">${m.p2}</span>`;
+        playersHTML = `<span class="match-players">${label1}<span class="vs">vs</span>${label2}</span>`;
+      }
+
+      return `<div class="match-row">
+        <span class="match-time">${m.time}</span>
+        <span class="match-badge ${m.type}">${m.type.toUpperCase()} #${m.num}</span>
+        ${playersHTML}
+        <span class="match-dot${isDone ? " filled" : ""}"></span>
+      </div>`;
+    }).join("");
+
+    return `<div class="day-card${isToday ? " today" : ""}">
+      <div class="day-header">
+        <span class="day-name">${d.day}</span>
+        ${isToday ? `<span class="today-pill">HARI INI</span>` : ""}
+      </div>
+      <div class="match-list">${matchesHTML}</div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("days-container").innerHTML =
+    `<div class="days-grid">${html}</div>`;
+}
+
+// ── Render: Kocok ──────────────────────────────────────────────
+function renderKocok() {
+  const gandaAssigned  = Object.values(state.hasilGanda).flat().filter(Boolean);
+  const singleAssigned = Object.values(state.hasilSingle).filter(Boolean);
+  const gandaDone  = Object.values(state.hasilGanda).every(arr => arr.length === 2);
+  const singleDone = Object.values(state.hasilSingle).every(Boolean);
+
+  const gandaChips = state.gandaPlayers.map(p => {
+    const cls = gandaAssigned.includes(p) ? "drawn-ganda" : "";
+    return `<span class="chip ${cls}">${p}</span>`;
+  }).join("");
+
+  const singleChips = state.singlePlayers.map(p => {
+    const cls = singleAssigned.includes(p) ? "drawn-single" : "";
+    return `<span class="chip ${cls}">${p}</span>`;
+  }).join("");
+
+  const gandaRows = Object.entries(state.hasilGanda).map(([tim, members]) =>
+    `<tr>
+      <td class="tim-key">${tim}</td>
+      <td>${members.length === 2
+        ? `<div class="tim-name">${tim}</div><div class="tim-members">👤 ${members[0]}&nbsp;&nbsp;👤 ${members[1]}</div>`
+        : `<span class="slot-empty">Belum dikocok</span>`
+      }</td>
+    </tr>`
+  ).join("");
+
+  const singleRows = Object.entries(state.hasilSingle).map(([player, name]) =>
+    `<tr>
+      <td class="p-key">${player}</td>
+      <td>${name
+        ? `<span class="p-val">${name}</span>`
+        : `<span class="p-empty">Belum dikocok</span>`
+      }</td>
+    </tr>`
+  ).join("");
+
+  document.getElementById("kocok-container").innerHTML = `
+    <div class="draw-layout">
+
+      <!-- Ganda -->
+      <div class="draw-card">
+        <div class="draw-card-header ganda">
+          <div class="ball-icon b8">8</div>
+          <div>
+            <h3>Ganda — Bola 8</h3>
+            <div class="header-sub">5 Tim · 2 pemain/tim · ${state.gandaPlayers.length} kandidat</div>
+          </div>
+        </div>
+        <div class="draw-body">
+          <div class="pool-label">Kandidat pemain ganda</div>
+          <div class="player-chips">${gandaChips}</div>
+          <div class="pool-label">Hasil kocok (per Tim)</div>
+          <table class="tim-slots">${gandaRows}</table>
+        </div>
+        <div class="done-banner ganda${gandaDone ? " show" : ""}">✅ Kocok ganda selesai!</div>
+        <div class="draw-footer">
+          <button class="btn btn-ganda" onclick="doDraw('ganda')">🎲 Kocok Ganda</button>
+          <button class="btn-reset" onclick="clearDraw('ganda')">↺</button>
+        </div>
+      </div>
+
+      <!-- Single -->
+      <div class="draw-card">
+        <div class="draw-card-header single">
+          <div class="ball-icon b9">9</div>
+          <div>
+            <h3>Single — Bola 9</h3>
+            <div class="header-sub">5 Player · ${state.singlePlayers.length} kandidat</div>
+          </div>
+        </div>
+        <div class="draw-body">
+          <div class="pool-label">Kandidat pemain single</div>
+          <div class="player-chips">${singleChips}</div>
+          <div class="pool-label">Hasil kocok</div>
+          <table class="player-slots">${singleRows}</table>
+        </div>
+        <div class="done-banner single${singleDone ? " show" : ""}">✅ Kocok single selesai!</div>
+        <div class="draw-footer">
+          <button class="btn btn-single" onclick="doDraw('single')">🎲 Kocok Single</button>
+          <button class="btn-reset" onclick="clearDraw('single')">↺</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Simpan ke Sheet -->
+    <div class="save-row" style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);margin-top:16px;padding:14px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div style="flex:1">
+        <p style="font-size:13px;font-weight:700;color:var(--text-dark)">💾 Simpan hasil kocok ke Google Sheet</p>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:2px">Semua orang yang buka halaman ini akan melihat hasil yang sama.</p>
+      </div>
+      <span id="save-status" class="save-status"></span>
+      <button class="btn-save" onclick="saveToSheet()" id="btn-save">Simpan ke Sheet</button>
+    </div>`;
+}
+
+// ── Render: Info Tim ───────────────────────────────────────────
+function renderInfo() {
+  // Kumpulkan jadwal main per tim ganda
+  const timSchedule = { "Tim 1":[], "Tim 2":[], "Tim 3":[], "Tim 4":[], "Tim 5":[] };
+  SCHEDULE.forEach(d => {
+    d.matches.forEach(m => {
+      if (m.type !== "ganda") return;
+      if (timSchedule[m.p1]) timSchedule[m.p1].push({ day: d.day, vs: m.p2, num: m.num, time: m.time });
+      if (timSchedule[m.p2]) timSchedule[m.p2].push({ day: d.day, vs: m.p1, num: m.num, time: m.time });
+    });
+  });
+
+  // Kumpulkan jadwal main per player single
+  const playerSchedule = { "Player 1":[], "Player 2":[], "Player 3":[], "Player 4":[], "Player 5":[] };
+  SCHEDULE.forEach(d => {
+    d.matches.forEach(m => {
+      if (m.type !== "single") return;
+      if (playerSchedule[m.p1]) playerSchedule[m.p1].push({ day: d.day, vs: m.p2, num: m.num, time: m.time });
+      if (playerSchedule[m.p2]) playerSchedule[m.p2].push({ day: d.day, vs: m.p1, num: m.num, time: m.time });
+    });
+  });
+
+  const gandaDone  = Object.values(state.hasilGanda).every(arr => arr.length === 2);
+  const singleDone = Object.values(state.hasilSingle).every(Boolean);
+
+  // Tim Ganda cards
+  const gandaCards = Object.entries(state.hasilGanda).map(([tim, members]) => {
+    const jadwal = timSchedule[tim] || [];
+    const membersHTML = members.length === 2
+      ? `<span>👤 ${members[0]}</span><span>👤 ${members[1]}</span>`
+      : `<span class="ref-empty">Belum dikocok</span>`;
+
+    const matchItems = jadwal.map(j => {
+      const oppMembers = state.hasilGanda[j.vs] || [];
+      const oppName = oppMembers.length === 2 ? `${oppMembers[0]} & ${oppMembers[1]}` : j.vs;
+      return `<div class="ref-match-item">
+        ${j.time} · <span class="opp">${j.vs}</span>
+        <div style="font-size:11px;color:var(--text-muted)">${j.day}${oppMembers.length === 2 ? ` — ${oppName}` : ""}</div>
+      </div>`;
+    }).join("");
+
+    return `<div class="ref-card">
+      <div class="ref-card-header">
+        <span class="ref-type-dot ganda"></span>
+        <h4>${tim}</h4>
+      </div>
+      <div class="ref-members">${membersHTML}</div>
+      <div class="ref-matches-label">Jadwal main (${jadwal.length} pertandingan)</div>
+      ${matchItems || `<div class="ref-empty">Tidak ada jadwal</div>`}
+    </div>`;
+  }).join("");
+
+  // Player Single cards
+  const singleCards = Object.entries(state.hasilSingle).map(([player, name]) => {
+    const jadwal = playerSchedule[player] || [];
+    const nameHTML = name
+      ? `<span>👤 ${name}</span>`
+      : `<span class="ref-empty">Belum dikocok</span>`;
+
+    const matchItems = jadwal.map(j => {
+      const oppName = state.hasilSingle[j.vs] || j.vs;
+      return `<div class="ref-match-item">
+        ${j.time} · <span class="opp">${j.vs}</span>
+        <div style="font-size:11px;color:var(--text-muted)">${j.day}${oppName !== j.vs ? ` — ${oppName}` : ""}</div>
+      </div>`;
+    }).join("");
+
+    return `<div class="ref-card">
+      <div class="ref-card-header">
+        <span class="ref-type-dot single"></span>
+        <h4>${player}</h4>
+      </div>
+      <div class="ref-members">${nameHTML}</div>
+      <div class="ref-matches-label">Jadwal main (${jadwal.length} pertandingan)</div>
+      ${matchItems || `<div class="ref-empty">Tidak ada jadwal</div>`}
+    </div>`;
+  }).join("");
+
+  const noticeHTML = (!gandaDone || !singleDone)
+    ? `<div class="notice-bar">⚠️ Beberapa pemain belum dikocok. Pergi ke tab <strong>🎲 Kocok</strong> untuk mengisi nama.</div>`
+    : "";
+
+  document.getElementById("info-container").innerHTML = `
+    ${noticeHTML}
+    <p style="font-size:13px;font-weight:700;color:var(--text-dark);margin-bottom:12px">🎱 Tim Ganda — Bola 8</p>
+    <div class="ref-grid">${gandaCards}</div>
+    <p style="font-size:13px;font-weight:700;color:var(--text-dark);margin-bottom:12px">🎯 Player Single — Bola 9</p>
+    <div class="ref-grid">${singleCards}</div>`;
+}
+
+// ── Render All ─────────────────────────────────────────────────
+function renderAll() {
+  renderSchedule();
+  renderKocok();
+  renderInfo();
+}
+
+// ── Draw Actions ───────────────────────────────────────────────
+function doDraw(type) {
+  if (type === "ganda") {
+    // Assign 2 orang per tim, tidak boleh overlap
+    const pool = shuffle(state.gandaPlayers);
+    let idx = 0;
+    ["Tim 1","Tim 2","Tim 3","Tim 4","Tim 5"].forEach(tim => {
+      state.hasilGanda[tim] = [pool[idx], pool[idx+1]];
+      idx += 2;
+    });
+  } else {
+    const pool = shuffle(state.singlePlayers);
+    ["Player 1","Player 2","Player 3","Player 4","Player 5"].forEach((p, i) => {
+      state.hasilSingle[p] = pool[i];
+    });
+  }
+  renderAll();
+}
+
+function clearDraw(type) {
+  if (type === "ganda") {
+    ["Tim 1","Tim 2","Tim 3","Tim 4","Tim 5"].forEach(t => state.hasilGanda[t] = []);
+  } else {
+    ["Player 1","Player 2","Player 3","Player 4","Player 5"].forEach(p => state.hasilSingle[p] = null);
+  }
+  renderAll();
+}
+
+// ── Save to Sheet ──────────────────────────────────────────────
+async function saveToSheet() {
+  const btn = document.getElementById("btn-save");
+  const statusEl = document.getElementById("save-status");
+  btn.disabled = true;
+  btn.textContent = "Menyimpan...";
+  statusEl.className = "save-status";
+  statusEl.textContent = "";
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        hasilGanda:  state.hasilGanda,
+        hasilSingle: state.hasilSingle,
+      }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    statusEl.className = "save-status show";
+    statusEl.textContent = "✅ Tersimpan!";
+  } catch (err) {
+    statusEl.className = "save-status show error";
+    statusEl.textContent = "⚠️ Gagal: " + err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Simpan ke Sheet";
+  }
+}
+
+// ── Tab Navigation ─────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll(".tab-panel").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
+  document.getElementById(`tab-${id}`).classList.add("active");
+  btn.classList.add("active");
+}
+
+// ── Init ───────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
