@@ -913,57 +913,93 @@
       const teamsGanda = Object.keys(state.hasilGanda);
       const teamsSingle = Object.keys(state.hasilSingle);
 
-      let gandaMatches = generateRoundRobin(teamsGanda, "ganda");
-      let singleMatches = generateRoundRobin(teamsSingle, "single");
+      let baseGandaMatches = generateRoundRobin(teamsGanda, "ganda");
+      let baseSingleMatches = generateRoundRobin(teamsSingle, "single");
 
-      gandaMatches = shuffle(gandaMatches);
-      singleMatches = shuffle(singleMatches);
-
-      let allMatches = [];
-      while (gandaMatches.length || singleMatches.length) {
-        if (gandaMatches.length) allMatches.push(gandaMatches.pop());
-        if (singleMatches.length) allMatches.push(singleMatches.pop());
-      }
-
-      let d = new Date(startStr);
-      // Pastikan tanggal mulai bukan akhir pekan
-      while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
-
-      const times = ["16.45", "17.25", "18.30"];
+      let validSchedule = false;
       let finalJadwal = [];
-      let matchCountForDay = 0;
+      let attempts = 0;
 
-      allMatches.forEach((m, idx) => {
-        if (matchCountForDay >= 3) {
-          d.setDate(d.getDate() + 1); // lanjut besok
-          // Lompat hari libur (0=Minggu, 6=Sabtu)
-          while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
-          matchCountForDay = 0;
+      while (!validSchedule && attempts < 2000) {
+        let gandaMatches = shuffle(baseGandaMatches);
+        let singleMatches = shuffle(baseSingleMatches);
+
+        let allMatches = [];
+        while (gandaMatches.length || singleMatches.length) {
+          if (gandaMatches.length) allMatches.push(gandaMatches.pop());
+          if (singleMatches.length) allMatches.push(singleMatches.pop());
         }
 
-        const timeIdx = matchCountForDay;
-        matchCountForDay++;
+        let d = new Date(startStr);
+        // Pastikan tanggal mulai bukan akhir pekan
+        while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
 
-        const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-        const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-        const dateStr = `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]}`;
+        const times = ["16.45", "17.25", "18.30"];
+        finalJadwal = [];
+        let matchCountForDay = 0;
+        validSchedule = true;
 
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const ddStr = String(d.getDate()).padStart(2, '0');
-        const isoDate = `${yyyy}-${mm}-${ddStr}`;
+        for (let idx = 0; idx < allMatches.length; idx++) {
+          let m = allMatches[idx];
+          if (matchCountForDay >= 3) {
+            d.setDate(d.getDate() + 1); // lanjut besok
+            // Lompat hari libur (0=Minggu, 6=Sabtu)
+            while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
+            matchCountForDay = 0;
+          }
 
-        finalJadwal.push({
-          id: "M" + (idx + 1),
-          date: dateStr + "|" + isoDate,
-          time: times[timeIdx],
-          type: m.type,
-          p1: m.p1,
-          p2: m.p2,
-          s1: null,
-          s2: null
-        });
-      });
+          const timeIdx = matchCountForDay;
+          matchCountForDay++;
+
+          // --- Validasi Akbar ---
+          let involvesAkbar = false;
+          if (m.type === "ganda") {
+            const t1 = resolveGanda(m.p1) || [];
+            const t2 = resolveGanda(m.p2) || [];
+            if (t1.some(name => name.toLowerCase().includes("akbar")) || t2.some(name => name.toLowerCase().includes("akbar"))) {
+               involvesAkbar = true;
+            }
+          } else {
+            const n1 = resolveSingle(m.p1) || "";
+            const n2 = resolveSingle(m.p2) || "";
+            if ((n1 && n1.toLowerCase().includes("akbar")) || (n2 && n2.toLowerCase().includes("akbar"))) {
+               involvesAkbar = true;
+            }
+          }
+
+          if (involvesAkbar && d.getDay() === 5 && times[timeIdx] !== "16.45") {
+            validSchedule = false;
+            break; // Jika akbar main di hari Jumat selain jam 16.45, kocok ulang
+          }
+          // ----------------------
+
+          const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+          const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+          const dateStr = `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]}`;
+
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const ddStr = String(d.getDate()).padStart(2, '0');
+          const isoDate = `${yyyy}-${mm}-${ddStr}`;
+
+          finalJadwal.push({
+            id: "M" + (idx + 1),
+            date: dateStr + "|" + isoDate,
+            time: times[timeIdx],
+            type: m.type,
+            p1: m.p1,
+            p2: m.p2,
+            s1: null,
+            s2: null
+          });
+        }
+        attempts++;
+      }
+
+      if (!validSchedule) {
+         alert("Tidak dapat menemukan jadwal yang memenuhi syarat (Akbar di hari Jumat harus jam 16:45) setelah banyak percobaan. Silakan coba lagi.");
+         return;
+      }
 
       state.jadwalSkor = finalJadwal;
       renderAll();
@@ -1082,8 +1118,9 @@
           if (winner) {
             stats[winner].win++;
             stats[loser].lose++;
+            
+            // Pemenang selalu dapat 3 poin, yang kalah dapat poin sesuai skor menang mereka
             stats[winner].pts += 3;
-            // Poin buat yang kalah = jumlah game yang berhasil mereka menangkan
             stats[loser].pts += loserScore;
           }
         }
@@ -1116,9 +1153,11 @@
         </table>
     `;
 
+      const ruleText = `Menang = 3 Poin &nbsp;·&nbsp; Kalah = Poin sesuai skor menang (Cth: Kalah ${Math.floor(state.boMode / 2) + 1}-1 dpt 1 Poin, Kalah ${Math.floor(state.boMode / 2) + 1}-0 dpt 0 Poin)`;
+
       document.getElementById("klasemen-container").innerHTML = `
       <div style="margin-bottom:14px;font-size:12px;color:var(--text-muted);background:var(--white);border:1px solid var(--border);border-radius:8px;padding:8px 14px;display:inline-block">
-        Mode: <strong>Best of ${state.boMode}</strong> &nbsp;·&nbsp; Win ${Math.floor(state.boMode / 2) + 1}-0 = 3 Poin &nbsp;·&nbsp; Win ${Math.floor(state.boMode / 2) + 1}-X = 3 Poin (Menang), 1 Poin (Kalah)
+        Mode: <strong>Best of ${state.boMode}</strong> &nbsp;·&nbsp; ${ruleText}
       </div>
       <h3 style="margin:10px 0 10px;color:var(--navy);font-size:15px">Bola 8 — Ganda</h3>
       ${buildTable(gandaStats)}
