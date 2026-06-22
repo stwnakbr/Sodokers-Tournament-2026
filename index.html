@@ -696,6 +696,15 @@
       display: none !important;
     }
 
+    body.is-admin .chip { cursor: pointer; }
+    body.is-admin .chip:hover { border-color: var(--navy); }
+    body.is-admin .tim-members span:hover,
+    body.is-admin .p-val:hover,
+    body.is-admin .ref-members span:hover {
+      text-decoration: underline;
+      color: var(--navy);
+    }
+
     @media (max-width: 600px) {
       .days-grid {
         grid-template-columns: 1fr;
@@ -738,7 +747,7 @@
         <div class="title-icon" style="background:#EBF2FF">📅</div>
         <div>
           <h2>Jadwal & Skor Pertandingan</h2>
-          <p class="admin-only" id="bo-subtitle">Isi skor (BO3) untuk menghitung klasemen otomatis.</p>
+          <p class="admin-only" id="bo-subtitle">Isi skor untuk menghitung klasemen otomatis.</p>
         </div>
       </div>
       <div class="save-row admin-only"
@@ -747,8 +756,6 @@
           <button class="btn-reset" onclick="buatJadwalOtomatis()"
             style="padding:7px 12px; background:var(--blue-light); border-color:#A8C2F0; color:var(--navy-light);">🔄
             Generate Jadwal Otomatis</button>
-          <button id="btn-bo-toggle" class="btn-reset" onclick="toggleBoMode()"
-            style="padding:7px 12px; background:#F0EBFF; border-color:#C5B8F0; color:#5B3FC0;">⚙️ Mode: BO3</button>
         </div>
         <span id="jadwal-save-status" class="save-status show"></span>
         <button class="btn-save" onclick="saveJadwalSkor()" style="padding:9px 18px">💾 Simpan Jadwal & Skor</button>
@@ -772,7 +779,7 @@
         <div class="title-icon" style="background:#FFF0E6">🏆</div>
         <div>
           <h2>Klasemen Poin</h2>
-          <p>Win 2-0 = 3 Poin | Win 2-1 = 3 Poin (Menang) & 1 Poin (Kalah)</p>
+          <p>Tiap game main 3x. Poin didapat persis sesuai dengan skor (Cth: 3-0 = 3 Poin, 2-1 = 2 Poin & 1 Poin)</p>
         </div>
       </div>
       <div id="klasemen-container"></div>
@@ -785,6 +792,7 @@
         <div>
           <h2>Kocok / Draw Pemain</h2>
           <p>Acak nama ke slot Tim & Player — simpan ke Google Sheet agar semua orang bisa lihat</p>
+          <p class="admin-only" style="color:var(--navy-light); font-weight:600; font-size:12px; margin-top:6px;">💡 Tips Admin: Klik nama pemain di tabel/chip untuk mengedit namanya.</p>
         </div>
       </div>
       <div id="kocok-container">
@@ -801,6 +809,7 @@
         <div>
           <h2>Informasi Tim & Jadwal Main</h2>
           <p>Siapa saja di Tim Ganda, dan kapan mereka main</p>
+          <p class="admin-only" style="color:var(--navy-light); font-weight:600; font-size:12px; margin-top:6px;">💡 Tips Admin: Klik nama pemain untuk mengedit namanya.</p>
         </div>
       </div>
       <div id="info-container">
@@ -822,7 +831,6 @@
     const state = {
       loaded: false,
       isAdmin: false,
-      boMode: 3, // Best of 3 (bisa diubah ke 5)
       gandaPlayers: [],
       singlePlayers: [],
       hasilGanda: {},
@@ -926,54 +934,54 @@
 
         let allMatches = [];
         let totalMatches = gandaPool.length + singlePool.length;
-        
-        for (let day = 0; day < Math.ceil(totalMatches / 3); day++) {
-           let singlePlayersToday = new Set();
-           for (let timeSlot = 0; timeSlot < 3; timeSlot++) {
-              if (allMatches.length >= totalMatches) break;
-              
-              let isGandaSlot = (timeSlot === 2);
-              let chosenMatch = null;
 
-              if (isGandaSlot && gandaPool.length > 0) {
-                 chosenMatch = gandaPool.pop();
-              } else if (!isGandaSlot && singlePool.length > 0) {
-                 let foundIdx = -1;
-                 for (let k = singlePool.length - 1; k >= 0; k--) {
-                    let sm = singlePool[k];
-                    if (!singlePlayersToday.has(sm.p1) && !singlePlayersToday.has(sm.p2)) {
-                       foundIdx = k;
-                       break;
-                    }
-                 }
-                 if (foundIdx !== -1) {
-                    chosenMatch = singlePool.splice(foundIdx, 1)[0];
-                    singlePlayersToday.add(chosenMatch.p1);
-                    singlePlayersToday.add(chosenMatch.p2);
-                 } else {
-                    chosenMatch = singlePool.pop();
-                 }
-              } else if (gandaPool.length > 0) {
-                 chosenMatch = gandaPool.pop();
-              } else {
-                 let foundIdx = -1;
-                 for (let k = singlePool.length - 1; k >= 0; k--) {
-                    let sm = singlePool[k];
-                    if (!singlePlayersToday.has(sm.p1) && !singlePlayersToday.has(sm.p2)) {
-                       foundIdx = k;
-                       break;
-                    }
-                 }
-                 if (foundIdx !== -1) {
-                    chosenMatch = singlePool.splice(foundIdx, 1)[0];
-                    singlePlayersToday.add(chosenMatch.p1);
-                    singlePlayersToday.add(chosenMatch.p2);
-                 } else {
-                    chosenMatch = singlePool.pop();
-                 }
+        for (let day = 0; day < Math.ceil(totalMatches / 3); day++) {
+          let singlePlayersToday = new Set();
+          for (let timeSlot = 0; timeSlot < 3; timeSlot++) {
+            if (allMatches.length >= totalMatches) break;
+
+            let isGandaSlot = (timeSlot === 2);
+            let chosenMatch = null;
+
+            if (isGandaSlot && gandaPool.length > 0) {
+              chosenMatch = gandaPool.pop();
+            } else if (!isGandaSlot && singlePool.length > 0) {
+              let foundIdx = -1;
+              for (let k = singlePool.length - 1; k >= 0; k--) {
+                let sm = singlePool[k];
+                if (!singlePlayersToday.has(sm.p1) && !singlePlayersToday.has(sm.p2)) {
+                  foundIdx = k;
+                  break;
+                }
               }
-              allMatches.push(chosenMatch);
-           }
+              if (foundIdx !== -1) {
+                chosenMatch = singlePool.splice(foundIdx, 1)[0];
+                singlePlayersToday.add(chosenMatch.p1);
+                singlePlayersToday.add(chosenMatch.p2);
+              } else {
+                chosenMatch = singlePool.pop();
+              }
+            } else if (gandaPool.length > 0) {
+              chosenMatch = gandaPool.pop();
+            } else {
+              let foundIdx = -1;
+              for (let k = singlePool.length - 1; k >= 0; k--) {
+                let sm = singlePool[k];
+                if (!singlePlayersToday.has(sm.p1) && !singlePlayersToday.has(sm.p2)) {
+                  foundIdx = k;
+                  break;
+                }
+              }
+              if (foundIdx !== -1) {
+                chosenMatch = singlePool.splice(foundIdx, 1)[0];
+                singlePlayersToday.add(chosenMatch.p1);
+                singlePlayersToday.add(chosenMatch.p2);
+              } else {
+                chosenMatch = singlePool.pop();
+              }
+            }
+            allMatches.push(chosenMatch);
+          }
         }
 
         let d = new Date(startStr);
@@ -1005,13 +1013,13 @@
             const t1 = resolveGanda(m.p1) || [];
             const t2 = resolveGanda(m.p2) || [];
             if (t1.some(name => name && name.toLowerCase().includes("akbar")) || t2.some(name => name && name.toLowerCase().includes("akbar"))) {
-               involvesAkbar = true;
+              involvesAkbar = true;
             }
           } else {
             const n1 = resolveSingle(m.p1) || "";
             const n2 = resolveSingle(m.p2) || "";
             if ((n1 && n1.toLowerCase().includes("akbar")) || (n2 && n2.toLowerCase().includes("akbar"))) {
-               involvesAkbar = true;
+              involvesAkbar = true;
             }
           }
 
@@ -1023,12 +1031,12 @@
 
           // --- Validasi Single 2x Sehari ---
           if (m.type === "single") {
-             if (playersToday.has(m.p1) || playersToday.has(m.p2)) {
-                validSchedule = false;
-                break;
-             }
-             playersToday.add(m.p1);
-             playersToday.add(m.p2);
+            if (playersToday.has(m.p1) || playersToday.has(m.p2)) {
+              validSchedule = false;
+              break;
+            }
+            playersToday.add(m.p1);
+            playersToday.add(m.p2);
           }
           // ----------------------
 
@@ -1056,8 +1064,8 @@
       }
 
       if (!validSchedule) {
-         alert("Tidak dapat menemukan jadwal yang memenuhi syarat (Akbar di hari Jumat harus jam 16:45) setelah banyak percobaan. Silakan coba lagi.");
-         return;
+        alert("Tidak dapat menemukan jadwal yang memenuhi syarat (Akbar di hari Jumat harus jam 16:45) setelah banyak percobaan. Silakan coba lagi.");
+        return;
       }
 
       state.jadwalSkor = finalJadwal;
@@ -1070,7 +1078,7 @@
       if (m) {
         let v = val === "" ? null : Number(val);
         if (v !== null) {
-          v = Math.max(0, Math.min(Math.floor(state.boMode / 2) + 1, v)); // Batasi 0 sampai nilai max BO
+          v = Math.max(0, Math.min(3, v));
           if (el) el.value = v;
         }
         if (playerNum === 1) m.s1 = v;
@@ -1120,12 +1128,11 @@
           if (tStr.includes(".") && tStr.split(".")[1].length === 1) tStr += "0"; // fix 18.3 menjadi 18.30
 
           let scoreHTML = "";
-          const maxScore = Math.floor(state.boMode / 2) + 1; // BO3=2, BO5=3
           if (state.isAdmin) {
             scoreHTML = `<div class="score-input">
-             <input type="number" min="0" max="${maxScore}" value="${s1}" onchange="updateScore('${m.id}', 1, this.value, this)">
+             <input type="number" min="0" max="3" value="${s1}" onchange="updateScore('${m.id}', 1, this.value, this)">
              <span style="color:var(--text-muted)">-</span>
-             <input type="number" min="0" max="${maxScore}" value="${s2}" onchange="updateScore('${m.id}', 2, this.value, this)">
+             <input type="number" min="0" max="3" value="${s2}" onchange="updateScore('${m.id}', 2, this.value, this)">
           </div>`;
           } else {
             scoreHTML = `<div style="margin-left:auto;font-weight:700;font-size:14px;color:var(--navy);background:#E8EFFE;padding:4px 10px;border-radius:12px;">
@@ -1164,24 +1171,22 @@
           stats[m.p1].m++;
           stats[m.p2].m++;
 
-          const maxW = Math.floor(state.boMode / 2) + 1; // 2 untuk BO3, 3 untuk BO5
-
           // Tentukan siapa menang dan berapa skor kalah
-          let winner = null, loser = null, loserScore = 0;
-          if (m.s1 === maxW && m.s2 < maxW) {
-            winner = m.p1; loser = m.p2; loserScore = m.s2;
-          } else if (m.s2 === maxW && m.s1 < maxW) {
-            winner = m.p2; loser = m.p1; loserScore = m.s1;
+          let winner = null, loser = null;
+          if (m.s1 > m.s2) {
+            winner = m.p1; loser = m.p2;
+          } else if (m.s2 > m.s1) {
+            winner = m.p2; loser = m.p1;
           }
 
           if (winner) {
             stats[winner].win++;
             stats[loser].lose++;
-            
-            // Pemenang selalu dapat 3 poin, yang kalah dapat poin sesuai skor menang mereka
-            stats[winner].pts += 3;
-            stats[loser].pts += loserScore;
           }
+          
+          // Poin selalu sesuai dengan skor masing-masing
+          stats[m.p1].pts += m.s1;
+          stats[m.p2].pts += m.s2;
         }
       });
 
@@ -1212,11 +1217,11 @@
         </table>
     `;
 
-      const ruleText = `Menang = 3 Poin &nbsp;·&nbsp; Kalah = Poin sesuai skor menang (Cth: Kalah ${Math.floor(state.boMode / 2) + 1}-1 dpt 1 Poin, Kalah ${Math.floor(state.boMode / 2) + 1}-0 dpt 0 Poin)`;
+      const ruleText = `Poin didapat sesuai dengan skor (Cth: Menang 3-0 dpt 3 Poin & 0 Poin | Menang 2-1 dpt 2 Poin & 1 Poin)`;
 
       document.getElementById("klasemen-container").innerHTML = `
       <div style="margin-bottom:14px;font-size:12px;color:var(--text-muted);background:var(--white);border:1px solid var(--border);border-radius:8px;padding:8px 14px;display:inline-block">
-        Mode: <strong>Best of ${state.boMode}</strong> &nbsp;·&nbsp; ${ruleText}
+        ${ruleText}
       </div>
       <h3 style="margin:10px 0 10px;color:var(--navy);font-size:15px">Bola 8 — Ganda</h3>
       ${buildTable(gandaStats)}
@@ -1230,15 +1235,15 @@
       const gandaAssigned = Object.values(state.hasilGanda).flat().filter(Boolean);
       const singleAssigned = Object.values(state.hasilSingle).filter(Boolean);
 
-      const gandaChips = state.gandaPlayers.map(p => `<span class="chip ${gandaAssigned.includes(p) ? "drawn-ganda" : ""}">${p}</span>`).join("");
-      const singleChips = state.singlePlayers.map(p => `<span class="chip ${singleAssigned.includes(p) ? "drawn-single" : ""}">${p}</span>`).join("");
+      const gandaChips = state.gandaPlayers.map(p => `<span class="chip ${gandaAssigned.includes(p) ? "drawn-ganda" : ""}" ${state.isAdmin ? `onclick="quickRename('${p.replace(/'/g, "\\'")}')" title="Edit Nama"` : ""}>${p}</span>`).join("");
+      const singleChips = state.singlePlayers.map(p => `<span class="chip ${singleAssigned.includes(p) ? "drawn-single" : ""}" ${state.isAdmin ? `onclick="quickRename('${p.replace(/'/g, "\\'")}')" title="Edit Nama"` : ""}>${p}</span>`).join("");
 
       const gandaRows = Object.entries(state.hasilGanda).map(([tim, members]) =>
-        `<tr><td class="tim-key">${tim}</td><td>${members.length === 2 ? `<div class="tim-name">${tim}</div><div class="tim-members">👤 ${members[0]}&nbsp;&nbsp;👤 ${members[1]}</div>` : `<span class="slot-empty">Belum dikocok</span>`}</td></tr>`
+        `<tr><td class="tim-key">${tim}</td><td>${members.length === 2 ? `<div class="tim-name">${tim}</div><div class="tim-members"><span ${state.isAdmin ? `onclick="quickRename('${members[0].replace(/'/g, "\\'")}')" title="Edit Nama" style="cursor:pointer"` : ""}>👤 ${members[0]}</span>&nbsp;&nbsp;<span ${state.isAdmin ? `onclick="quickRename('${members[1].replace(/'/g, "\\'")}')" title="Edit Nama" style="cursor:pointer"` : ""}>👤 ${members[1]}</span></div>` : `<span class="slot-empty">Belum dikocok</span>`}</td></tr>`
       ).join("");
 
       const singleRows = Object.entries(state.hasilSingle).map(([player, name]) =>
-        `<tr><td class="p-key">${player}</td><td>${name ? `<span class="p-val">${name}</span>` : `<span class="p-empty">Belum dikocok</span>`}</td></tr>`
+        `<tr><td class="p-key">${player}</td><td>${name ? `<span class="p-val" ${state.isAdmin ? `onclick="quickRename('${name.replace(/'/g, "\\'")}')" title="Edit Nama" style="cursor:pointer"` : ""}>${name}</span>` : `<span class="p-empty">Belum dikocok</span>`}</td></tr>`
       ).join("");
 
       document.getElementById("kocok-container").innerHTML = `
@@ -1314,7 +1319,7 @@
 
         return Object.entries(dataDict).map(([key, val]) => {
           const jadwal = schedDict[key] || [];
-          const memHTML = isGanda ? (val.length === 2 ? `<span>👤 ${val[0]}</span><span>👤 ${val[1]}</span>` : `<span class="ref-empty">Belum dikocok</span>`) : (val ? `<span>👤 ${val}</span>` : `<span class="ref-empty">Belum dikocok</span>`);
+          const memHTML = isGanda ? (val.length === 2 ? `<span ${state.isAdmin ? `onclick="quickRename('${val[0].replace(/'/g, "\\'")}')" title="Edit Nama" style="cursor:pointer"` : ""}>👤 ${val[0]}</span><span ${state.isAdmin ? `onclick="quickRename('${val[1].replace(/'/g, "\\'")}')" title="Edit Nama" style="cursor:pointer"` : ""}>👤 ${val[1]}</span>` : `<span class="ref-empty">Belum dikocok</span>`) : (val ? `<span ${state.isAdmin ? `onclick="quickRename('${val.replace(/'/g, "\\'")}')" title="Edit Nama" style="cursor:pointer"` : ""}>👤 ${val}</span>` : `<span class="ref-empty">Belum dikocok</span>`);
 
           const matchItems = jadwal.map(j => {
             let oppName = j.vs;
@@ -1352,6 +1357,33 @@
     }
 
     // ── Actions ────────────────────────────────────────────────────
+    function quickRename(oldName) {
+      if (!state.isAdmin) return;
+      const newName = prompt(`Ganti nama "${oldName}" menjadi:\n(Akan terganti di semua jadwal & klasemen)`, oldName);
+      if (!newName || newName === oldName) return;
+
+      const gIdx = state.gandaPlayers.indexOf(oldName);
+      if (gIdx !== -1) state.gandaPlayers[gIdx] = newName;
+
+      const sIdx = state.singlePlayers.indexOf(oldName);
+      if (sIdx !== -1) state.singlePlayers[sIdx] = newName;
+
+      Object.keys(state.hasilGanda).forEach(tim => {
+        const arr = state.hasilGanda[tim];
+        const i = arr.indexOf(oldName);
+        if (i !== -1) arr[i] = newName;
+      });
+
+      Object.keys(state.hasilSingle).forEach(player => {
+        if (state.hasilSingle[player] === oldName) {
+          state.hasilSingle[player] = newName;
+        }
+      });
+
+      renderAll();
+      alert(`Berhasil! Nama "${oldName}" diubah menjadi "${newName}".\n\n⚠️ Jangan lupa klik "Simpan ke Sheet" (di tab Kocok) agar tersimpan permanen di server!`);
+    }
+
     function doDraw(type) {
       if (type === "ganda") {
         let pool = [];
@@ -1395,8 +1427,8 @@
         }
 
         if (!isValid) {
-           alert("Gagal mengocok: Tidak ada formasi ganda yang sesuai dengan aturan Akbar di hari Jumat. Coba ubah jadwal.");
-           return;
+          alert("Gagal mengocok: Tidak ada formasi ganda yang sesuai dengan aturan Akbar di hari Jumat. Coba ubah jadwal.");
+          return;
         }
 
         let idx = 0;
@@ -1408,7 +1440,7 @@
         let pool = [];
         let isValid = false;
         let attempts = 0;
-        
+
         while (!isValid && attempts < 2000) {
           pool = shuffle(state.singlePlayers);
           isValid = true;
@@ -1437,8 +1469,8 @@
         }
 
         if (!isValid) {
-           alert("Gagal mengocok: Tidak ada formasi single yang sesuai dengan aturan Akbar di hari Jumat. Coba ubah jadwal.");
-           return;
+          alert("Gagal mengocok: Tidak ada formasi single yang sesuai dengan aturan Akbar di hari Jumat. Coba ubah jadwal.");
+          return;
         }
 
         Object.keys(state.hasilSingle).forEach((p, i) => {
@@ -1484,19 +1516,15 @@
     }
 
     async function saveJadwalSkor() {
-      const maxW = Math.floor(state.boMode / 2) + 1; // BO3 = 2, BO5 = 3
       const invalidMatches = state.jadwalSkor.filter(m => {
         if (m.s1 === null && m.s2 === null) return false; // Belum diisi, skip
         if (m.s1 === null || m.s2 === null) return true;  // Hanya satu diisi
-        // Cek salah satu harus mencapai maxW, yang lain < maxW
-        const p1Wins = m.s1 === maxW && m.s2 < maxW;
-        const p2Wins = m.s2 === maxW && m.s1 < maxW;
-        return !p1Wins && !p2Wins;
+        if (m.s1 + m.s2 !== 3) return true; // Total skor harus 3
+        return false;
       });
 
       if (invalidMatches.length > 0) {
-        const examples = maxW === 2 ? "2-0, 0-2, 2-1, atau 1-2" : "3-0, 0-3, 3-1, 1-3, 3-2, atau 2-3";
-        alert(`Gagal menyimpan: Ada skor yang tidak valid atau belum lengkap!\nMode saat ini: Best of ${state.boMode}.\nKombinasi skor yang diizinkan: ${examples}.`);
+        alert(`Gagal menyimpan: Total skor tiap pertandingan harus berjumlah 3! (Contoh: 3-0, 0-3, 2-1, atau 1-2). Karena 1 pertandingan pasti main 3 kali.`);
         return;
       }
 
@@ -1514,17 +1542,6 @@
       } catch (err) {
         if (statusEl) { statusEl.className = "save-status show error"; statusEl.textContent = "⚠️ Gagal: " + err.message; }
       }
-    }
-
-    // ── BO Mode Toggle ─────────────────────────────────────────────
-    function toggleBoMode() {
-      state.boMode = state.boMode === 3 ? 5 : 3;
-      const btn = document.getElementById("btn-bo-toggle");
-      if (btn) btn.textContent = `⚙️ Mode: BO${state.boMode}`;
-      const sub = document.getElementById("bo-subtitle");
-      if (sub) sub.textContent = `Isi skor (BO${state.boMode}) untuk menghitung klasemen otomatis.`;
-      renderSchedule();
-      renderKlasemen();
     }
 
     // ── Navigation ─────────────────────────────────────────────────
