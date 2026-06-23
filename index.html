@@ -282,9 +282,10 @@
 
     .match-row {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 10px;
-      padding: 9px 16px;
+      gap: 10px 12px;
+      padding: 10px 16px;
       border-bottom: 1px solid rgba(11, 30, 53, 0.055);
       transition: background .1s;
     }
@@ -327,7 +328,8 @@
 
     .match-players {
       flex: 1;
-      font-size: 12px;
+      min-width: 140px;
+      font-size: 12.5px;
       color: var(--text-dark);
       line-height: 1.5;
     }
@@ -348,15 +350,26 @@
       margin: 0 4px;
     }
 
+    .score-display {
+      margin-left: auto;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--navy);
+      background: #E8EFFE;
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+
     .score-input {
       display: flex;
       gap: 4px;
       align-items: center;
       margin-left: auto;
+      flex-shrink: 0;
     }
 
     .score-input input {
-      width: 36px;
+      width: 48px;
       text-align: center;
       border: 1px solid var(--border);
       border-radius: 4px;
@@ -364,6 +377,16 @@
       padding: 4px;
       outline: none;
       transition: border .2s;
+    }
+
+    .score-input input::-webkit-outer-spin-button,
+    .score-input input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    .score-input input[type=number] {
+      -moz-appearance: textfield;
     }
 
     .score-input input:focus {
@@ -1135,7 +1158,7 @@
              <input type="number" min="0" max="3" value="${s2}" onchange="updateScore('${m.id}', 2, this.value, this)">
           </div>`;
           } else {
-            scoreHTML = `<div style="margin-left:auto;font-weight:700;font-size:14px;color:var(--navy);background:#E8EFFE;padding:4px 10px;border-radius:12px;">
+            scoreHTML = `<div class="score-display">
              ${m.s1 !== null ? m.s1 : "-"} <span style="color:var(--text-muted);font-weight:400;margin:0 2px;">vs</span> ${m.s2 !== null ? m.s2 : "-"}
           </div>`;
           }
